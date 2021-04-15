@@ -1,13 +1,13 @@
 <template>
   <div id="app">
-    <div class='calculator'>
+    <div class='calculator' @keyup.delete='clickKey($event)'>
       <!-- 입력한 연산식 -->
       <div class='result cal' style='grid-area: result'>
         {{txtCal}} {{tempCal}}<br/>
       </div>
       <!-- 입력한 숫자 -->
       <div class='result' style='grid-area: command'>
-        {{txtNumber}}<br/>
+        {{number}}<br/>
       </div>
       <!-- 기타 기능 -->
       <button class='btn accent' style='grid-area: ac' @click='init'>AC</button>
@@ -26,12 +26,13 @@
       <!-- 숫자 -->
       <button
         v-for='number in 10' :key='number + 10'
-        @click='appendNum(number - 1)'
+        @click='appendNum((number - 1) + "")'
         :style="'grid-area: number-' + (number-1)"
         class='num'>
         {{number - 1}}
       </button>
     </div>
+    <div class='right'>© 2021. yeonju.jin. all rights reserved</div>
   </div>
 </template>
 <script>
@@ -39,7 +40,7 @@ export default {
   name: 'App',
   data () {
     return {
-      number: '', // 사용자가 입력한 숫자
+      number: '0', // 사용자가 입력한 숫자
       cals : [
         { key: '÷', op : '/', id : 'divide' },
         { key: 'x', op : '*', id : 'multiply' },
@@ -49,12 +50,7 @@ export default {
       txtCal: '', // 연산식
       tempCal: '', // 일시적인 연산자
       sign: '', // 부호
-      clickType: 0 // 0: 연산자 입력중, 1: 숫자 입력중, 2. '=' 이후
-    }
-  },
-  computed: {
-    txtNumber () { // 화면에 표시되는 숫자
-      return this.number
+      clickType: 1 // 0: 연산자 입력중, 1: 숫자 입력중, 2. '=' 이후
     }
   },
   watch: {
@@ -63,12 +59,12 @@ export default {
     }
   },
   mounted () {
-    this.number = '0'
+    window.addEventListener('keypress', this.clickKey)
   },
   methods: {
     appendCal (code) {
       if (this.clickType) { // 숫자입력 -> 연산자 입력
-        this.txtCal += ' ' + this.tempCal + ' ' + this.txtNumber
+        this.txtCal += ' ' + this.tempCal + ' ' + this.number
         this.number = eval(this.txtCal) + ''
         this.tempCal = code
 
@@ -79,8 +75,8 @@ export default {
     },
     appendNum (number) {
       if (this.clickType === 1) { // 숫자 입력중
-        if (this.number === '0') this.number = number + ''
-        else this.number += number + ''
+        if (this.number === '0') this.number = number
+        else this.number += number
       } else { // 연산자 입력 -> 숫자입력
         this.number = number
         this.clickType = 1
@@ -97,7 +93,7 @@ export default {
       this.clickType = 1
     },
     setResult () { // '=' 클릭
-      const temp = this.txtCal + this.tempCal + this.txtNumber
+      const temp = this.txtCal + this.tempCal + this.number
       this.init()
       this.clickType = 2
       this.number = eval(temp) + ''
@@ -111,6 +107,20 @@ export default {
     },
     delNum () {
       this.number = this.number.slice(0, -1)
+    },
+    clickKey (event) {
+      const keyCode = event.keyCode
+      if (keyCode >= 48 && keyCode) { // 숫자 입력
+        this.appendNum(event.key)
+      } else if (keyCode === 43 || keyCode === 45 ||
+        keyCode === 47 || keyCode ===42
+      ) { // 연산자 입력
+        this.appendCal(event.key)
+      } else if (keyCode === 61 || keyCode === 13) { // '=', enter
+        this.setResult()
+      } else if (keyCode === 46) { // dot
+        this.addDot()
+      }
     }
   }
 }
