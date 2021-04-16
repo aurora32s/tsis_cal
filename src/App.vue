@@ -1,13 +1,13 @@
 <template>
   <div id="app">
-    <div class='calculator' @keyup.delete='clickKey($event)'>
+    <div class='calculator'>
       <!-- 입력한 연산식 -->
       <div class='result cal' style='grid-area: result'>
         {{txtCal}} {{tempCal}}<br/>
       </div>
       <!-- 입력한 숫자 -->
       <div class='result' style='grid-area: command'>
-        {{number}}<br/>
+        {{txtNumber}}<br/>
       </div>
       <!-- 기타 기능 -->
       <button class='btn accent' style='grid-area: ac' @click='init'>AC</button>
@@ -49,8 +49,16 @@ export default {
       ], // 연산의 종류
       txtCal: '', // 연산식
       tempCal: '', // 일시적인 연산자
-      sign: '', // 부호
       clickType: 1 // 0: 연산자 입력중, 1: 숫자 입력중, 2. '=' 이후
+    }
+  },
+  computed: {
+    txtNumber () {
+      if (this.number.indexOf('.') < 0) return this.number.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+      else { // 소수점 포함
+        const temp = this.number.split('.')
+        return temp[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + (temp[1]?temp[1]:'')
+      }
     }
   },
   watch: {
@@ -59,7 +67,7 @@ export default {
     }
   },
   mounted () {
-    window.addEventListener('keypress', this.clickKey)
+    window.addEventListener('keydown', this.clickKey)
   },
   methods: {
     appendCal (code) {
@@ -109,17 +117,22 @@ export default {
       this.number = this.number.slice(0, -1)
     },
     clickKey (event) {
-      const keyCode = event.keyCode
-      if (keyCode >= 48 && keyCode) { // 숫자 입력
+      const keyCode = event.key
+      // console.log(event)
+      if (keyCode>='0' && keyCode<='9') { // 숫자 입력
         this.appendNum(event.key)
-      } else if (keyCode === 43 || keyCode === 45 ||
-        keyCode === 47 || keyCode ===42
+      } else if (event.keyCode === 8) { // backspace
+        this.delNum()
+      } else if (keyCode === '/' || keyCode === '*' ||
+        keyCode === '+' || keyCode === '-'
       ) { // 연산자 입력
         this.appendCal(event.key)
-      } else if (keyCode === 61 || keyCode === 13) { // '=', enter
+      } else if (keyCode === '=' || event.keyCode === 13) { // '=', enter
         this.setResult()
-      } else if (keyCode === 46) { // dot
+      } else if (keyCode === '.') { // dot
         this.addDot()
+      } else if (event.keyCode === 27) { // AC(ESC)
+        this.init()
       }
     }
   }
